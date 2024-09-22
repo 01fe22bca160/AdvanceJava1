@@ -1,47 +1,83 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Scanner;
 
 public class ScrollableResultSetExample {
-
     public static void main(String[] args) {
-        Connection conn = null;
+        Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        Scanner scanner = new Scanner(System.in);
 
         try {
-            
-            String url = "jdbc:mysql://localhost:3306/JavaAssignment";  // Replace with your database name
-            String username = "root";  // Replace with your MySQL username
-            String password = "Rakshita@2003";  // Replace with your MySQL password  
-            conn = DriverManager.getConnection(url, username, password);
-            System.out.println("Connected to MySQL Database.");
+            // Establish connection
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            String URL = "jdbc:oracle:thin:@localhost:1521:xe";
+            String USER = "SYSTEM";
+            String PASSWORD = "BCA5C";
+            con = DriverManager.getConnection(URL, USER, PASSWORD);
 
-         
-            String selectQuery = "SELECT * FROM Employee";
-            pstmt = conn.prepareStatement(selectQuery, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            // Use a scrollable result set
+            String query = "SELECT * FROM Employee";
+            pstmt = con.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             rs = pstmt.executeQuery();
 
-            rs.last();
-            System.out.println("Last Row: " + rs.getString("Ename"));
+            // Menu to scroll through results
+            System.out.println("Scrollable Employee Records:");
+            boolean exit = false;
+            while (!exit) {
+                System.out.println("\nEnter command (next, previous, first, last, exit): ");
+                String command = scanner.nextLine();
 
-         
-            rs.first();
-            System.out.println("First Row: " + rs.getString("Ename"));
+                switch (command.toLowerCase()) {
+                    case "next":
+                        if (rs.next()) {
+                            printEmployee(rs);
+                        } else {
+                            System.out.println("No more records.");
+                        }
+                        break;
+                    case "previous":
+                        if (rs.previous()) {
+                            printEmployee(rs);
+                        } else {
+                            System.out.println("No more records.");
+                        }
+                        break;
+                    case "first":
+                        if (rs.first()) {
+                            printEmployee(rs);
+                        }
+                        break;
+                    case "last":
+                        if (rs.last()) {
+                            printEmployee(rs);
+                        }
+                        break;
+                    case "exit":
+                        exit = true;
+                        break;
+                    default:
+                        System.out.println("Invalid command.");
+                }
+            }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         } finally {
-        
             try {
                 if (rs != null) rs.close();
                 if (pstmt != null) pstmt.close();
-                if (conn != null) conn.close();
+                if (con != null) con.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    // Helper method to print employee details
+    public static void printEmployee(ResultSet rs) throws SQLException {
+        System.out.println("EID: " + rs.getInt("Eid") + ", Name: " + rs.getString("Ename") +
+                           ", Salary: " + rs.getDouble("Salary") + ", Address: " + rs.getString("Address") +
+                           ", Did: " + rs.getInt("Did"));
     }
 }
