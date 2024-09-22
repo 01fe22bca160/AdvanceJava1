@@ -1,83 +1,70 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Scanner;
 
 public class PreparedStatementExample {
     public static void main(String[] args) {
-        Connection con = null;
+        Connection conn = null;
         PreparedStatement pstmt = null;
-        Scanner scanner = new Scanner(System.in);
+        ResultSet rs = null;
 
         try {
-            // Establish connection
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            String URL = "jdbc:oracle:thin:@localhost:1521:xe";
-            String USER = "SYSTEM";
-            String PASSWORD = "BCA5C";
-            con = DriverManager.getConnection(URL, USER, PASSWORD);
+            // 1. Establishing the connection
+            String url = "jdbc:mysql://localhost:3306/JavaAssignment";  // Replace with your database name
+            String username = "root";  // Replace with your MySQL username
+            String password = "Rakshita@2003";  // Replace with your MySQL password
+            conn = DriverManager.getConnection(url, username, password);
+            System.out.println("Connected to MySQL Database.");
 
-            // Get user input
-            System.out.print("Enter Employee ID for insertion: ");
-            int eid = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            // 2. Inserting into Employee Table using PreparedStatement
+            String insertEmp = "INSERT INTO Employee (EmpID, Ename, Salary, Employeecol, Did) VALUES (?, ?, ?, ?, ?)";
+            pstmt = conn.prepareStatement(insertEmp);
 
-            System.out.print("Enter Employee Name: ");
-            String ename = scanner.nextLine();
+            // Inserting multiple employees
+            pstmt.setInt(1, 106);
+            pstmt.setString(2, "Bob Smith");
+            pstmt.setDouble(3, 70000);
+            pstmt.setString(4, "Texas");
+            pstmt.setInt(5, 3);
+            pstmt.executeUpdate();
 
-            System.out.print("Enter Employee Salary: ");
-            double salary = scanner.nextDouble();
+            pstmt.setInt(1, 107);
+            pstmt.setString(2, "Alice Johnson");
+            pstmt.setDouble(3, 65000);
+            pstmt.setString(4, "Florida");
+            pstmt.setInt(5, 4);
+            pstmt.executeUpdate();
 
-            System.out.print("Enter Employee Address: ");
-            scanner.nextLine(); // Consume newline
-            String address = scanner.nextLine();
+            pstmt.setInt(1, 108);
+            pstmt.setString(2, "Michael Lee");
+            pstmt.setDouble(3, 72000);
+            pstmt.setString(4, "Nevada");
+            pstmt.setInt(5, 2);
+            pstmt.executeUpdate();
 
-            System.out.print("Enter Department ID: ");
-            int did = scanner.nextInt();
+            // 3. Select Query using PreparedStatement
+            String selectQuery = "SELECT * FROM Employee WHERE Did = ?";
+            pstmt = conn.prepareStatement(selectQuery);
+            
+            // Selecting employees belonging to Department 3
+            pstmt.setInt(1, 3);
+            rs = pstmt.executeQuery();
 
-            // Insert a new employee
-            String insertQuery = "INSERT INTO Employee (Eid, Ename, Salary, Address, Did) VALUES (?, ?, ?, ?, ?)";
-            pstmt = con.prepareStatement(insertQuery);
-            pstmt.setInt(1, eid);
-            pstmt.setString(2, ename);
-            pstmt.setDouble(3, salary);
-            pstmt.setString(4, address);
-            pstmt.setInt(5, did);
-            int rowsInserted = pstmt.executeUpdate();
-            System.out.println(rowsInserted + " row(s) inserted.");
-
-            // Update employee's salary
-            System.out.print("Enter Employee ID to update salary: ");
-            int updateEid = scanner.nextInt();
-
-            System.out.print("Enter new salary: ");
-            double newSalary = scanner.nextDouble();
-
-            String updateQuery = "UPDATE Employee SET Salary = ? WHERE Eid = ?";
-            pstmt = con.prepareStatement(updateQuery);
-            pstmt.setDouble(1, newSalary);
-            pstmt.setInt(2, updateEid);
-            int rowsUpdated = pstmt.executeUpdate();
-            System.out.println(rowsUpdated + " row(s) updated.");
-
-            // Delete an employee
-            System.out.print("Enter Employee ID to delete: ");
-            int deleteEid = scanner.nextInt();
-
-            String deleteQuery = "DELETE FROM Employee WHERE Eid = ?";
-            pstmt = con.prepareStatement(deleteQuery);
-            pstmt.setInt(1, deleteEid);
-            int rowsDeleted = pstmt.executeUpdate();
-            System.out.println(rowsDeleted + " row(s) deleted.");
-
-        } catch (ClassNotFoundException | SQLException e) {
+            // Printing the results
+            System.out.println("Employees in Department 3:");
+            while (rs.next()) {
+                System.out.println(rs.getInt("EmpID") + " | " + rs.getString("Ename") + " | " + rs.getDouble("Salary"));
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
         } finally {
+            // 4. Clean up resources
             try {
+                if (rs != null) rs.close();
                 if (pstmt != null) pstmt.close();
-                if (con != null) con.close();
-                scanner.close();
+                if (conn != null) conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
